@@ -17,7 +17,8 @@ def init_database():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            image_data BLOB NOT NULL
+            image_data BLOB,
+            embedding BLOB NOT NULL
         )
     ''')
     
@@ -40,20 +41,32 @@ def blob_to_temp_file(blob_data):
 
 def register_face(image_path, person_name):
     try:
-        # Verify if the image contains a face
-        face = DeepFace.extract_faces(image_path, detector_backend='retinaface')
+        # Use a consistent model name
+        model_name = "GhostFaceNet"  # Ensure this is the same in both functions
         
-        # Convert image to blob
-        image_blob = image_to_blob(image_path)
+        # Change detector_backend to a faster option like 'opencv'
+        face = DeepFace.extract_faces(image_path, detector_backend='opencv')
         
-        # Store information in SQLite database
+        # Get embedding for the image
+        embedding = DeepFace.represent(
+            image_path,
+            model_name=model_name,  # Use the consistent model name
+            detector_backend='opencv',
+            enforce_detection=False,
+            align=True
+        )[0]['embedding']
+        
+        # Convert embedding to a blob
+        embedding_blob = base64.b64encode(np.array(embedding, dtype=np.float64)).decode('utf-8')
+        
+        # Store information in SQLite database without image data
         conn = sqlite3.connect('face_recognition.db')
         cursor = conn.cursor()
         
         cursor.execute('''
-            INSERT INTO users (name, image_data)
+            INSERT INTO users (name, embedding)
             VALUES (?, ?)
-        ''', (person_name, image_blob))
+        ''', (person_name, embedding_blob))
         
         conn.commit()
         conn.close()
@@ -63,8 +76,20 @@ def register_face(image_path, person_name):
     except Exception as e:
         return False, f"Error registering face: {str(e)}"
 
+def cosine_distance(embedding1, embedding2):
+    """Calculate cosine distance between two embeddings"""
+    dot_product = np.dot(embedding1, embedding2)
+    norm1 = np.linalg.norm(embedding1)
+    norm2 = np.linalg.norm(embedding2)
+    return 1 - (dot_product / (norm1 * norm2))
 def verify_face(image_path):
     try:
+        # Use a consistent model name
+        model_name = "GhostFaceNet"  # Ensure this is the same in both functions
+        
+        # Change detector_backend to a faster option like 'opencv'
+        detector_backend = 'opencv'
+        
         conn = sqlite3.connect('face_recognition.db')
         cursor = conn.cursor()
         
@@ -93,80 +118,37 @@ def verify_face(image_path):
             else:
                 return False, "Unsupported image format"
 
-            # Get all registered faces
-            cursor.execute('SELECT id, name, image_data FROM users')
+            # Get embedding for the input image
+            input_embedding = DeepFace.represent(
+                temp_input_path,
+                model_name=model_name,  # Use the consistent model name
+                detector_backend=detector_backend,
+                enforce_detection=False,
+                align=True
+            )[0]['embedding']
+
+            # Get all stored embeddings
+            cursor.execute('SELECT id, name, embedding FROM users')
             registered_faces = cursor.fetchall()
             
             best_match = None
             min_distance = float('inf')
 
-            # Try different face detection backends
-            backends = ["retinaface", "mtcnn", "opencv"]
-            face_detected = False
-            successful_backend = None
-            
-            for backend in backends:
-                try:
-                    faces = DeepFace.extract_faces(temp_input_path, detector_backend=backend)
-                    if faces:
-                        face_detected = True
-                        successful_backend = backend
-                        print(f"Face detected using {backend}")
-                        break
-                except Exception as e:
-                    print(f"Backend {backend} failed: {str(e)}")
-                    continue
-
-            if not face_detected:
-                return False, "No face detected in the image. Please try again."
-
-            # Get embedding for the input image
-            try:
-                input_embedding = DeepFace.represent(
-                    temp_input_path,
-                    model_name="GhostFaceNet",
-                    detector_backend=successful_backend,
-                    enforce_detection=False,
-                    align=True
-                )[0]['embedding']
-            except Exception as e:
-                print(f"Error getting input embedding: {str(e)}")
-                return False, "Failed to process input image"
-
-            for face_id, name, face_data in registered_faces:
-                temp_path = f"temp_{face_id}_{os.urandom(4).hex()}.jpg"
+            for face_id, name, embedding_blob in registered_faces:
+                # Convert stored embedding back to numpy array
+                db_embedding = np.frombuffer(
+                    base64.b64decode(embedding_blob), 
+                    dtype=np.float64
+                )
                 
-                try:
-                    with open(temp_path, 'wb') as f:
-                        f.write(face_data)
-                    
-                    # Get embedding for database image
-                    db_embedding = DeepFace.represent(
-                        temp_path,
-                        model_name="GhostFaceNet",
-                        detector_backend=successful_backend,
-                        enforce_detection=False,
-                        align=True
-                    )[0]['embedding']
-                    
-                    # Calculate cosine distance
-                    def cosine_distance(vector_a, vector_b):
-                        dot_product = np.dot(vector_a, vector_b)
-                        norm_a = np.linalg.norm(vector_a)
-                        norm_b = np.linalg.norm(vector_b)
-                        return 1 - (dot_product / (norm_a * norm_b))
-                    
-                    distance = cosine_distance(input_embedding, db_embedding)
-                    
-                    print(f"Distance for {name}: {distance}")
-                    
-                    if distance < min_distance:
-                        min_distance = distance
-                        best_match = (name, 1 - distance)
-                    
-                finally:
-                    if os.path.exists(temp_path):
-                        os.remove(temp_path)
+                # Calculate cosine distance
+                distance = cosine_distance(input_embedding, db_embedding)
+                
+                print(f"Distance for {name}: {distance}")
+                
+                if distance < min_distance:
+                    min_distance = distance
+                    best_match = (name, 1 - distance)
 
         finally:
             # Clean up input temp file
@@ -176,7 +158,7 @@ def verify_face(image_path):
         conn.close()
         
         # Threshold for GhostFaceNet (may need adjustment)
-        threshold = 0.35
+        threshold = 0.45
         if best_match and min_distance < threshold:
             confidence = best_match[1]
             return True, f"Match found! Person: {best_match[0]} (Confidence: {confidence:.2%})"
