@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from Face_Reco import register_face, verify_face  # Import Face Recognition functions
+from Face_Recognition import register_face, verify_face  # Import Face Recognition functions
 from job_seeker_logic import JobSeekerLogic  # Logic class for handling database interactions
 
 def sign_up(logic):
