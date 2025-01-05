@@ -1,7 +1,7 @@
 ### stt_app.py
 import streamlit as st
 from tempfile import NamedTemporaryFile
-from stt_methods import STTProcessor
+from speech2text import STTProcessor
 
 def main():
     st.title("Real-Time Speech-to-Text Transcription App")
