@@ -41,16 +41,16 @@ def blob_to_temp_file(blob_data):
 
 def register_face(image_path, person_name):
     try:
-        # Use a consistent model name
-        model_name = "GhostFaceNet"  # Ensure this is the same in both functions
+
+        model_name = "GhostFaceNet"  
         
-        # Change detector_backend to a faster option like 'opencv'
+
         face = DeepFace.extract_faces(image_path, detector_backend='opencv')
         
         # Get embedding for the image
         embedding = DeepFace.represent(
             image_path,
-            model_name=model_name,  # Use the consistent model name
+            model_name=model_name,  
             detector_backend='opencv',
             enforce_detection=False,
             align=True
@@ -59,7 +59,7 @@ def register_face(image_path, person_name):
         # Convert embedding to a blob
         embedding_blob = base64.b64encode(np.array(embedding, dtype=np.float64)).decode('utf-8')
         
-        # Store information in SQLite database without image data
+
         conn = sqlite3.connect('face_recognition.db')
         cursor = conn.cursor()
         
@@ -84,10 +84,10 @@ def cosine_distance(embedding1, embedding2):
     return 1 - (dot_product / (norm1 * norm2))
 def verify_face(image_path):
     try:
-        # Use a consistent model name
-        model_name = "GhostFaceNet"  # Ensure this is the same in both functions
+
+        model_name = "GhostFaceNet"  
         
-        # Change detector_backend to a faster option like 'opencv'
+
         detector_backend = 'opencv'
         
         conn = sqlite3.connect('face_recognition.db')
@@ -121,7 +121,7 @@ def verify_face(image_path):
             # Get embedding for the input image
             input_embedding = DeepFace.represent(
                 temp_input_path,
-                model_name=model_name,  # Use the consistent model name
+                model_name=model_name, 
                 detector_backend=detector_backend,
                 enforce_detection=False,
                 align=True
