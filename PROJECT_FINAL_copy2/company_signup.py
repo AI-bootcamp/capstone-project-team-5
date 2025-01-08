@@ -4,6 +4,8 @@ import sqlite3
 from FaceRecognition import register_face, verify_face
 from company_logic import CompanyLogic
 import job_listing_page  # Import the job listing page
+import view_interviews  # Import the view interviews page
+
 
 def sign_up(logic):
     st.subheader("Company Sign Up")
@@ -107,9 +109,12 @@ def main():
     if 'is_logged_in' not in st.session_state:
         st.session_state['is_logged_in'] = False
 
-    # If logged in, show the job listing page
+    # If logged in, show the job listing page or the interviews page
     if st.session_state['is_logged_in']:
-        job_listing_page.main()  # Call the job listing page
+        if 'current_job_key' in st.session_state:
+            view_interviews.main()  # Call the view interviews page
+        else:
+            job_listing_page.main()  # Call the job listing page
         return  # Stop further execution of the login/signup page
 
     # If not logged in, show the login/signup page

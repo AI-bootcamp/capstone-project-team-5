@@ -52,8 +52,10 @@ cursor.execute('''
 CREATE TABLE IF NOT EXISTS Interview (
     Applicant_name TEXT NOT NULL,
     Applicant_phone TEXT PRIMARY KEY,
-    Audio_transcript TEXT,
-    Interview_summary TEXT,
+    Applicant_email TEXT NOT NULL,
+    Audio_transcript TEXT NOT NULL,
+    Interview_summary TEXT NOT NULL,
+    Ranking_score INTEGER NOT NULL,
     interview_id INTEGER NOT NULL,
     FOREIGN KEY (interview_id) REFERENCES Job_Listing(job_key)
 );

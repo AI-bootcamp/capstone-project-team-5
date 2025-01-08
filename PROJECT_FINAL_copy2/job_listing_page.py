@@ -1,6 +1,10 @@
 import streamlit as st
 from job_listing_logic import JobListingLogic
 
+def view_interviews(job_key):
+    st.session_state['current_job_key'] = job_key
+    st.rerun()
+
 def main():
     st.title("Job Listing Management")
 
@@ -52,9 +56,6 @@ def main():
         st.subheader("All Job Listings")
         job_listings = logic.get_all_job_listings()
 
-        def _(x):
-            print(x)
-
         if job_listings:
             for job in job_listings:
                 st.write(f"**Job ID**: {job[0]}")
@@ -63,8 +64,8 @@ def main():
                 st.write(f"**Description**: {job[3]}")
                 st.write(f"**Requirements**: {job[4]}")
                 st.write(f"**HR Questions**: {job[5]}")
-                if st.button("clicky",key=job[0]):
-                    print(job[0])
+                if st.button(f"View Interviews for Job {job[0]}", key=f"view_interviews_{job[0]}"):
+                    view_interviews(job[0])
                 st.write("---")
         else:
             st.info("No job listings found.")
