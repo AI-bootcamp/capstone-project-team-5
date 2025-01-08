@@ -52,6 +52,9 @@ def main():
         st.subheader("All Job Listings")
         job_listings = logic.get_all_job_listings()
 
+        def _(x):
+            print(x)
+
         if job_listings:
             for job in job_listings:
                 st.write(f"**Job ID**: {job[0]}")
@@ -60,6 +63,8 @@ def main():
                 st.write(f"**Description**: {job[3]}")
                 st.write(f"**Requirements**: {job[4]}")
                 st.write(f"**HR Questions**: {job[5]}")
+                if st.button("clicky",key=job[0]):
+                    print(job[0])
                 st.write("---")
         else:
             st.info("No job listings found.")
