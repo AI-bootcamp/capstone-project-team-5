@@ -6,6 +6,8 @@ import base64
 import io
 import os
 import shutil
+import hashlib
+
 
 def image_to_blob(image_path):
     # Read image and convert to blob
@@ -28,7 +30,7 @@ def register_face(image_path, comp_name, password, representative):
 
         # Change detector_backend to a faster option like 'opencv'
         face = DeepFace.extract_faces(image_path, detector_backend='opencv')
-
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         # Get embedding for the image
         embedding = DeepFace.represent(
             image_path,
@@ -48,7 +50,7 @@ def register_face(image_path, comp_name, password, representative):
         cursor.execute('''
             INSERT INTO Company (comp_name, password, representative, embedding, image_data)
             VALUES (?, ?, ?, ?, ?)
-        ''', (comp_name, password, representative, embedding_blob, image_to_blob(image_path)))
+        ''', (comp_name, hashed_password, representative, embedding_blob, image_to_blob(image_path)))
 
         conn.commit()
         conn.close()

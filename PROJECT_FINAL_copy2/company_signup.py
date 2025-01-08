@@ -83,8 +83,8 @@ def login_with_face_id():
             st.error("Please upload or capture yourself!")
 
 def main():
-    db_path = "sure_platform.db"  # Path to your database
-    logic = CompanyLogic(db_path=db_path)
+    db_paths = "sure_platform.db"  # Path to your database
+    logic = CompanyLogic(db_path=db_paths)
 
     st.sidebar.title("Navigation")
     functionality = st.sidebar.radio("Go to", ["Sign Up", "Login with Credentials", "Login with Face ID"])
