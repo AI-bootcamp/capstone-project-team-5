@@ -1,7 +1,9 @@
 import streamlit as st
 import os
-from FaceRecognition import register_face, verify_face 
+import sqlite3
+from FaceRecognition import register_face, verify_face
 from company_logic import CompanyLogic
+import job_listing_page  # Import the job listing page
 
 def sign_up(logic):
     st.subheader("Company Sign Up")
@@ -49,7 +51,20 @@ def login_with_credentials(logic):
             success, message = logic.authenticate_company(comp_name, password)
 
             if success:
-                st.success(f"Login successful! Welcome, {message}.")
+                # Fetch the company_id after successful login
+                conn = sqlite3.connect(logic.db_path)
+                cursor = conn.cursor()
+                cursor.execute('SELECT company_id FROM Company WHERE comp_name = ?', (comp_name,))
+                result = cursor.fetchone()
+                conn.close()
+
+                if result:
+                    company_id = result[0]
+                    st.session_state['company_id'] = company_id  # Store company_id in session state
+                    st.session_state['is_logged_in'] = True  # Set login status to True
+                    st.success(f"Login successful! Welcome, {message}.")
+                else:
+                    st.error("Company ID not found.")
             else:
                 st.error(f"Login failed: {message}")
         else:
@@ -70,9 +85,11 @@ def login_with_face_id():
             with open(temp_path, "wb") as f:
                 f.write(image_file.getbuffer())
 
-            success, message = verify_face(temp_path)
+            success, message, company_id = verify_face(temp_path)
 
             if success:
+                st.session_state['company_id'] = company_id  # Store company_id in session state
+                st.session_state['is_logged_in'] = True  # Set login status to True
                 st.success(message)
             else:
                 st.error(message)
@@ -83,9 +100,19 @@ def login_with_face_id():
             st.error("Please upload or capture yourself!")
 
 def main():
-    db_paths = "sure_platform.db"  # Path to your database
-    logic = CompanyLogic(db_path=db_paths)
+    db_path = "sure_platform.db"  # Path to your database
+    logic = CompanyLogic(db_path=db_path)
 
+    # Initialize session state for navigation
+    if 'is_logged_in' not in st.session_state:
+        st.session_state['is_logged_in'] = False
+
+    # If logged in, show the job listing page
+    if st.session_state['is_logged_in']:
+        job_listing_page.main()  # Call the job listing page
+        return  # Stop further execution of the login/signup page
+
+    # If not logged in, show the login/signup page
     st.sidebar.title("Navigation")
     functionality = st.sidebar.radio("Go to", ["Sign Up", "Login with Credentials", "Login with Face ID"])
 

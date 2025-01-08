@@ -84,7 +84,7 @@ def verify_face(image_path):
 
         if count == 0:
             conn.close()
-            return False, "No faces in database"
+            return False, "No faces in database", None
 
         # Create a temporary file from the uploaded image
         temp_input_path = f"temp_input_{os.urandom(4).hex()}.jpg"
@@ -99,9 +99,9 @@ def verify_face(image_path):
                 if os.path.isfile(image_path):
                     shutil.copy(image_path, temp_input_path)
                 else:
-                    return False, "Invalid image path"
+                    return False, "Invalid image path", None
             else:
-                return False, "Unsupported image format"
+                return False, "Unsupported image format", None
 
             # Get embedding for the input image
             input_embedding = DeepFace.represent(
@@ -146,14 +146,13 @@ def verify_face(image_path):
         threshold = 0.45
         if best_match and min_distance < threshold:
             confidence = best_match[2]
-            return True, f"Match found! Company: {best_match[1]} (Confidence: {confidence:.2%})"
+            return True, f"Match found! Company: {best_match[1]} (Confidence: {confidence:.2%})", best_match[0]
         else:
-            return False, f"No match found in database (Best distance: {min_distance:.2f})"
+            return False, f"No match found in database (Best distance: {min_distance:.2f})", None
 
     except Exception as e:
         print(f"Verification error: {str(e)}")  # Debug print
-        return False, f"Error during verification: {str(e)}"
-
+        return False, f"Error during verification: {str(e)}", None
 def capture_image():
     """Capture image from webcam"""
     cap = cv2.VideoCapture(0)
