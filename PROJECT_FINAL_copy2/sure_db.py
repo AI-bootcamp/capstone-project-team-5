@@ -50,12 +50,13 @@ cursor.execute('DROP TABLE IF EXISTS Interview;')
 # Create the new Interview table
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS Interview (
-    Applicant_name TEXT NOT NULL,
-    Applicant_phone TEXT PRIMARY KEY,
-    Applicant_email TEXT NOT NULL,
-    Audio_transcript TEXT NOT NULL,
-    Interview_summary TEXT NOT NULL,
-    Ranking_score INTEGER NOT NULL,
+    applicant_name TEXT NOT NULL,
+    applicant_phone TEXT PRIMARY KEY,
+    applicant_email TEXT NOT NULL,
+    resume_text TEXT NOT NULL,
+    audio_transcript TEXT NOT NULL,
+    interview_summary TEXT NOT NULL,
+    ranking_score INTEGER NOT NULL,
     interview_id INTEGER NOT NULL,
     FOREIGN KEY (interview_id) REFERENCES Job_Listing(job_key)
 );
@@ -66,3 +67,4 @@ conn.commit()
 conn.close()
 
 print("Database updated successfully!")
+
