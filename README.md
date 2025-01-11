@@ -1,7 +1,7 @@
 # شُور - AI-Powered Recruitment Platform
 
 ## Overview
-شُور (ٍSure) is an AI-powered recruitment platform designed to streamline the hiring process for both job seekers and HR representatives. The platform leverages advanced technologies such as facial recognition, natural language processing (NLP), and machine learning to provide a seamless and efficient recruitment experience.
+شُور (Sure) is an AI-powered recruitment platform designed to streamline the hiring process for both job seekers and HR representatives. The platform leverages advanced technologies such as facial recognition, natural language processing (NLP), and machine learning to provide a seamless and efficient recruitment experience.
 
 ---
 
