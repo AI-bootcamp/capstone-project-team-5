@@ -1,3 +1,5 @@
+![surelogo](https://github.com/user-attachments/assets/beba74e4-1db3-4d4c-8930-f05531999962)
+
 # شُور - AI-Powered Recruitment Platform
 
 ## Overview
@@ -66,6 +68,7 @@ is an AI-powered recruitment platform designed to streamline the hiring process 
 - Streamlit
 - SQLite
 - DeepFace
+- FFMPEG
 - pdfplumber
 - TensorFlow
-- Qrog API Key (for Llama and whisper models)
+- Qrog API Key (for Llama model)
