@@ -1,5 +1,5 @@
 import streamlit as st
-from interview_logic import CVProcessor, AudioProcessor, InterviewManager
+from applicant_portal.logic_n_models.interview_logic import CVProcessor, AudioProcessor, InterviewManager
 from streamlit_webrtc import webrtc_streamer
 import sqlite3
 import pdfplumber

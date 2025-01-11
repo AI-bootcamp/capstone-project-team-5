@@ -1,5 +1,5 @@
 import streamlit as st
-from interview_logic_og import CVProcessor, AudioProcessor, InterviewManager
+from train4interview.logic_n_models.interview_logic_og import CVProcessor, AudioProcessor, InterviewManager
 from streamlit_webrtc import webrtc_streamer
 
 # Configurations
