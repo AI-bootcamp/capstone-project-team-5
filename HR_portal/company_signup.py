@@ -1,10 +1,10 @@
 import streamlit as st
 import os
 import sqlite3
-from FaceRecognition import register_face, verify_face
-from company_logic import CompanyLogic
-import job_listing_page  # Import the job listing page
-import view_interviews  # Import the view interviews page
+from logic_n_models.FaceRecognition import register_face, verify_face
+from logic_n_models.company_logic import CompanyLogic
+import job_listing_page
+import view_interviews  
 
 
 def sign_up(logic):
@@ -102,7 +102,7 @@ def login_with_face_id():
             st.error("Please upload or capture yourself!")
 
 def main():
-    db_path = "sure_platform.db"  # Path to your database
+    db_path = "../db/sure_platform.db"  # Path to your database
     logic = CompanyLogic(db_path=db_path)
 
     # Initialize session state for navigation

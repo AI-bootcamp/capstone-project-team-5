@@ -2,7 +2,7 @@ import streamlit as st
 import sqlite3
 
 def get_interviews_for_job(job_key):
-    conn = sqlite3.connect('sure_platform.db')
+    conn = sqlite3.connect('../db/sure_platform.db')
     cursor = conn.cursor()
 
     # Fetch interviews for the specific job listing and sort by Ranking_score in descending order

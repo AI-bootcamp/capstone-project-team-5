@@ -1,5 +1,5 @@
 import streamlit as st
-from job_listing_logic import JobListingLogic
+from logic_n_models.job_listing_logic import JobListingLogic
 
 def view_interviews(job_key):
     st.session_state['current_job_key'] = job_key
@@ -13,7 +13,7 @@ def main():
         st.error("Please log in to access this page.")
         return
 
-    db_path = "sure_platform.db"  # Adjust this path to match your database location
+    db_path = "../db/sure_platform.db"  # Adjust this path to match your database location
     logic = JobListingLogic(db_path)
 
     # Sidebar for navigation

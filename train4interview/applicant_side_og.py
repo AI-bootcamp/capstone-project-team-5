@@ -3,7 +3,7 @@ from interview_logic_og import CVProcessor, AudioProcessor, InterviewManager
 from streamlit_webrtc import webrtc_streamer
 
 # Configurations
-DB_PATH = "interview_data.db"
+DB_PATH = "../db/interview_data.db"
 LLM_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 LLM_API_KEY = "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"
 AUDIO_FILE = "interview_audio.wav"

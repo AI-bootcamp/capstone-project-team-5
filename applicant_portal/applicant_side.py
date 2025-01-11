@@ -6,7 +6,7 @@ import pdfplumber
 import requests
 
 # Configurations
-DB_PATH = "sure_platform.db"
+DB_PATH = "../db/sure_platform.db"
 LLM_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 LLM_API_KEY = "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"
 AUDIO_FILE = "interview_audio.wav"
