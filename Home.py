@@ -4,7 +4,7 @@ import subprocess
 # Homepage
 def home_page():
     # Display the logo
-    st.image("../static/surelogo.jpg", width=1000)  
+    st.image("static/surelogo.jpg", width=1000)  
 
     st.title("Welcome to SURE | شُور")
     st.markdown("### Revolutionizing Recruitment with AI-Powered Features")
