@@ -6,6 +6,8 @@ import base64
 import io
 import os
 import shutil
+import hashlib
+
 
 def image_to_blob(image_path):
     # Read image and convert to blob
@@ -21,14 +23,14 @@ def blob_to_temp_file(blob_data):
     cv2.imwrite(temp_path, img)
     return temp_path
 
-def register_face(image_path, person_name, jobseeker_id, password, bootcamp, resume):
+def register_face(image_path, comp_name, password, representative):
     try:
         # Use a consistent model name
         model_name = "GhostFaceNet"  # Ensure this is the same in both functions
 
         # Change detector_backend to a faster option like 'opencv'
         face = DeepFace.extract_faces(image_path, detector_backend='opencv')
-
+        hashed_password = hashlib.sha256(password.encode()).hexdigest()
         # Get embedding for the image
         embedding = DeepFace.represent(
             image_path,
@@ -41,14 +43,14 @@ def register_face(image_path, person_name, jobseeker_id, password, bootcamp, res
         # Convert embedding to a blob
         embedding_blob = base64.b64encode(np.array(embedding, dtype=np.float64)).decode('utf-8')
 
-        # Store information in the jobseeker table
-        conn = sqlite3.connect('recruitment_platform.db')  # Path to the shared database
+        # Store information in the Company table
+        conn = sqlite3.connect('sure_platform.db')  # Path to the shared database
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT INTO jobseeker (jobseeker_id, name, password, bootcamp, resume, embedding)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (jobseeker_id, person_name, password, bootcamp, resume, embedding_blob))
+            INSERT INTO Company (comp_name, password, representative, embedding, image_data)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (comp_name, hashed_password, representative, embedding_blob, image_to_blob(image_path)))
 
         conn.commit()
         conn.close()
@@ -73,16 +75,16 @@ def verify_face(image_path):
         # Change detector_backend to a faster option like 'opencv'
         detector_backend = 'opencv'
 
-        conn = sqlite3.connect('recruitment_platform.db')  # Path to the shared database
+        conn = sqlite3.connect('sure_platform.db')  # Path to the shared database
         cursor = conn.cursor()
 
-        # Check if there are any registered users
-        cursor.execute('SELECT COUNT(*) FROM jobseeker')
+        # Check if there are any registered companies
+        cursor.execute('SELECT COUNT(*) FROM Company')
         count = cursor.fetchone()[0]
 
         if count == 0:
             conn.close()
-            return False, "No faces in database"
+            return False, "No faces in database", None
 
         # Create a temporary file from the uploaded image
         temp_input_path = f"temp_input_{os.urandom(4).hex()}.jpg"
@@ -97,9 +99,9 @@ def verify_face(image_path):
                 if os.path.isfile(image_path):
                     shutil.copy(image_path, temp_input_path)
                 else:
-                    return False, "Invalid image path"
+                    return False, "Invalid image path", None
             else:
-                return False, "Unsupported image format"
+                return False, "Unsupported image format", None
 
             # Get embedding for the input image
             input_embedding = DeepFace.represent(
@@ -111,13 +113,13 @@ def verify_face(image_path):
             )[0]['embedding']
 
             # Get all stored embeddings
-            cursor.execute('SELECT jobseeker_id, name, embedding FROM jobseeker')
+            cursor.execute('SELECT company_id, comp_name, embedding FROM Company')
             registered_faces = cursor.fetchall()
 
             best_match = None
             min_distance = float('inf')
 
-            for jobseeker_id, name, embedding_blob in registered_faces:
+            for company_id, comp_name, embedding_blob in registered_faces:
                 # Convert stored embedding back to numpy array
                 db_embedding = np.frombuffer(
                     base64.b64decode(embedding_blob), 
@@ -127,11 +129,11 @@ def verify_face(image_path):
                 # Calculate cosine distance
                 distance = cosine_distance(input_embedding, db_embedding)
 
-                print(f"Distance for {name}: {distance}")
+                print(f"Distance for {comp_name}: {distance}")
 
                 if distance < min_distance:
                     min_distance = distance
-                    best_match = (jobseeker_id, name, 1 - distance)
+                    best_match = (company_id, comp_name, 1 - distance)
 
         finally:
             # Clean up input temp file
@@ -144,14 +146,13 @@ def verify_face(image_path):
         threshold = 0.45
         if best_match and min_distance < threshold:
             confidence = best_match[2]
-            return True, f"Match found! Jobseeker ID: {best_match[0]}, Name: {best_match[1]} (Confidence: {confidence:.2%})"
+            return True, f"Match found! Company: {best_match[1]} (Confidence: {confidence:.2%})", best_match[0]
         else:
-            return False, f"No match found in database (Best distance: {min_distance:.2f})"
+            return False, f"No match found in database (Best distance: {min_distance:.2f})", None
 
     except Exception as e:
         print(f"Verification error: {str(e)}")  # Debug print
-        return False, f"Error during verification: {str(e)}"
-
+        return False, f"Error during verification: {str(e)}", None
 def capture_image():
     """Capture image from webcam"""
     cap = cv2.VideoCapture(0)
@@ -172,22 +173,21 @@ def capture_image():
             return None
 
 def get_all_users():
-    conn = sqlite3.connect('recruitment_platform.db')  # Path to the shared database
+    conn = sqlite3.connect('sure_platform.db')  # Path to the shared database
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT jobseeker_id, name, bootcamp, resume 
-        FROM jobseeker 
-        ORDER BY jobseeker_id DESC
+        SELECT company_id, comp_name, representative 
+        FROM Company 
+        ORDER BY company_id DESC
     ''')
 
     users = []
     for row in cursor.fetchall():
         users.append({
-            'jobseeker_id': row[0],
-            'name': row[1],
-            'bootcamp': row[2],
-            'resume': row[3]
+            'company_id': row[0],
+            'comp_name': row[1],
+            'representative': row[2]
         })
 
     conn.close()
@@ -195,17 +195,15 @@ def get_all_users():
 
 def main():
     while True:
-        print("\n1. Register new jobseeker")
+        print("\n1. Register new company")
         print("2. Verify face")
         print("3. Exit")
         choice = input("Enter your choice (1-3): ")
 
         if choice == "1":
-            jobseeker_id = input("Enter jobseeker ID: ")
-            name = input("Enter name: ")
+            comp_name = input("Enter company name: ")
             password = input("Enter password: ")
-            bootcamp = input("Enter bootcamp: ")
-            resume = input("Enter resume (link or details): ")
+            representative = input("Enter representative: ")
             print("1. Upload image")
             print("2. Capture from webcam")
             img_choice = input("Enter choice (1-2): ")
@@ -217,7 +215,7 @@ def main():
                 if not image_path:
                     continue
 
-            success, message = register_face(image_path, name, jobseeker_id, password, bootcamp, resume)
+            success, message = register_face(image_path, comp_name, password, representative)
             print(message)
 
             # Clean up temporary capture file

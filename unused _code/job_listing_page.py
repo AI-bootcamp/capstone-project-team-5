@@ -1,19 +1,10 @@
 import streamlit as st
 from job_listing_logic import JobListingLogic
 
-def view_interviews(job_key):
-    st.session_state['current_job_key'] = job_key
-    st.rerun()
-
 def main():
     st.title("Job Listing Management")
 
-    # Check if the user is logged in
-    if 'company_id' not in st.session_state:
-        st.error("Please log in to access this page.")
-        return
-
-    db_path = "sure_platform.db"  # Adjust this path to match your database location
+    db_path = "recruitment_platform.db"  # Adjust this path to match your database location
     logic = JobListingLogic(db_path)
 
     # Sidebar for navigation
@@ -23,30 +14,21 @@ def main():
     if choice == "Create Job Listing":
         st.subheader("Create a New Job Listing")
 
-        # Automatically use the company_id from the session state
-        company_id = st.session_state['company_id']
-        st.write(f"**Company ID**: {company_id}")
-
-        # Input fields for job listing
-        job_title = st.text_input("Job Title")
-        description = st.text_area("Job Description")
-        requirements = st.text_area("Requirements")
-        hr_questions = st.text_area("HR Questions")
+        job_id = st.text_input("Enter Job ID")
+        company_id = st.text_input("Enter Company ID")
+        job_title = st.text_input("Enter Job Title")
+        description = st.text_area("Enter Job Description")
+        skills = st.text_input("Enter Required Skills (comma-separated)")
+        openings = st.number_input("Enter Number of Openings", min_value=1, step=1)
+        targeted_bootcamp = st.text_input("Enter Targeted Bootcamp")
 
         if st.button("Create Job Listing"):
-            if job_title and description and requirements and hr_questions:
-                # Generate a unique job_id (you can use a UUID or other method)
-                job_id = f"JOB-{company_id}-{st.session_state.get('job_counter', 1)}"
-                st.session_state['job_counter'] = st.session_state.get('job_counter', 1) + 1
-
-                # Save the job listing to the database
-                success, message, job_key = logic.create_job_listing(
-                    job_id, company_id, job_title, description, requirements, hr_questions
+            if job_id and company_id and job_title and description and skills and openings and targeted_bootcamp:
+                success, message = logic.create_job_listing(
+                    job_id, company_id, job_title, description, skills, openings, targeted_bootcamp
                 )
-
                 if success:
                     st.success(message)
-                    st.write(f"**Job Key**: {job_key}")  # Display the job_key
                 else:
                     st.error(message)
             else:
@@ -62,10 +44,9 @@ def main():
                 st.write(f"**Company ID**: {job[1]}")
                 st.write(f"**Job Title**: {job[2]}")
                 st.write(f"**Description**: {job[3]}")
-                st.write(f"**Requirements**: {job[4]}")
-                st.write(f"**HR Questions**: {job[5]}")
-                if st.button(f"View Interviews for Job {job[0]}", key=f"view_interviews_{job[0]}"):
-                    view_interviews(job[0])
+                st.write(f"**Skills**: {job[4]}")
+                st.write(f"**Openings**: {job[5]}")
+                st.write(f"**Targeted Bootcamp**: {job[6]}")
                 st.write("---")
         else:
             st.info("No job listings found.")

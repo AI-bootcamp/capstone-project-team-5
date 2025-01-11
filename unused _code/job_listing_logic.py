@@ -4,26 +4,23 @@ class JobListingLogic:
     def __init__(self, db_path):
         self.db_path = db_path
 
-    def create_job_listing(self, job_id, company_id, job_title, description, requirements, hr_questions):
+    def create_job_listing(self, job_id, company_id, job_title, description, skills, openings, targeted_bootcamp):
         try:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
             cursor.execute('''
-                INSERT INTO Job_Listing (company_id, job_title, description, requirements, HR_questions)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (company_id, job_title, description, requirements, hr_questions))
-
-            # Get the last inserted row id (job_key)
-            job_key = cursor.lastrowid
+                INSERT INTO Job_Listing (job_id, company_id, job_title, description, skills, openings, targeted_bootcamp)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', (job_id, company_id, job_title, description, skills, openings, targeted_bootcamp))
 
             conn.commit()
             conn.close()
-            return True, "Job listing created successfully!", job_key
+            return True, "Job listing created successfully!"
 
         except Exception as e:
-            return False, f"Error creating job listing: {str(e)}", None
-        
+            return False, f"Error creating job listing: {str(e)}"
+
     def get_all_job_listings(self):
         try:
             conn = sqlite3.connect(self.db_path)
@@ -43,7 +40,7 @@ class JobListingLogic:
             conn = sqlite3.connect(self.db_path)
             cursor = conn.cursor()
 
-            cursor.execute('DELETE FROM Job_Listing WHERE job_key = ?', (job_id,))
+            cursor.execute('DELETE FROM Job_Listing WHERE job_id = ?', (job_id,))
             conn.commit()
             conn.close()
             return True, "Job listing deleted successfully!"
