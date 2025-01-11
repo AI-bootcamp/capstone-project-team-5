@@ -136,7 +136,7 @@ if st.session_state.step == "interview":
         if st.button("Record Response"):
             st.info("Recording... Please wait.")
             try:
-                audio_processor.record_audio(duration_minutes=1, output_path=AUDIO_FILE)
+                audio_processor.record_audio(duration_minutes=18, output_path=AUDIO_FILE)
                 response_text = audio_processor.transcribe_audio(AUDIO_FILE)
                 st.success(f"Recorded response: {response_text}")
                 st.session_state.interview_responses.append(response_text)

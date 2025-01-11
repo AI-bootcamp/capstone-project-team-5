@@ -115,7 +115,7 @@ class AudioProcessor:
             duration_minutes (int): Duration of the recording in minutes.
             output_path (str): Path to save the recorded audio file.
         """
-        duration_seconds = duration_minutes * 60
+        duration_seconds = duration_minutes
         fs = 44100
         audio_data = sd.rec(int(duration_seconds * fs), samplerate=fs, channels=2, dtype='int16')
         sd.wait()
@@ -188,9 +188,8 @@ class InterviewManager:
             f"HR Questions: {hr_questions}\n\n"
             f"And the interview responses so far:\n{all_responses}\n\n"
             f"Generate a single short and concise interview question. "
-            f"The question should focus on the applicant's skills, experience, and alignment with the job requirements."
-        )
-
+            f"The question should focus on the applicant's skills, experience, and alignment with the job requirements. (don't tell me what you did or say here's this or that. just print the question)"
+            )
         # Prepare the payload for the LLM API request
         payload = {
             "model": "llama3-8b-8192",
