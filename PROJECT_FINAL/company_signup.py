@@ -1,12 +1,20 @@
 import streamlit as st
 import os
-from FaceRecognition import register_face, verify_face 
+from FaceRecognition import register_face, verify_face
 from company_logic import CompanyLogic
+import job_listing_app
+
+# Initialize session state keys
+if 'comp_name' not in st.session_state:
+    st.session_state['comp_name'] = None
+if 'company_id' not in st.session_state:
+    st.session_state['company_id'] = None
 
 def sign_up(logic):
     st.subheader("Company Sign Up")
 
     comp_name = st.text_input("Enter Company Name")
+    phone_number = st.text_input("Enter Phone Number")
     representative = st.text_input("Enter Representative Name")
     password = st.text_input("Enter Password", type="password")
     confirm_password = st.text_input("Confirm Password", type="password")
@@ -14,7 +22,7 @@ def sign_up(logic):
     captured_image = st.camera_input("Capture Personal Photo")
 
     if st.button("Register"):
-        if comp_name and representative and password and confirm_password and (image_file or captured_image):
+        if comp_name and phone_number and representative and password and confirm_password and (image_file or captured_image):
             if password != confirm_password:
                 st.error("Passwords do not match!")
                 return
@@ -26,10 +34,15 @@ def sign_up(logic):
             with open(temp_path, "wb") as f:
                 f.write(image_file.getbuffer())
 
-            success, message = register_face(temp_path, comp_name, password, representative)
+            success, message = logic.register_company(comp_name, phone_number, password, representative, temp_path)
 
             if success:
                 st.success("Registration successful! You can now log in.")
+                company_id = message.split('ID: ')[-1]  # Extract company ID
+                st.session_state['comp_name'] = comp_name
+                st.session_state['company_id'] = company_id
+                st.info(f"Your Company ID is: {company_id}. Use it to log in.")
+                job_listing_app.main()  # Open job listing app
             else:
                 st.error(f"Registration failed: {message}")
 
@@ -41,19 +54,24 @@ def sign_up(logic):
 def login_with_credentials(logic):
     st.subheader("Login with Credentials")
 
-    comp_name = st.text_input("Enter Company Name")
+    phone_number = st.text_input("Enter Phone Number")
     password = st.text_input("Enter Password", type="password")
 
     if st.button("Login with Credentials"):
-        if comp_name and password:
-            success, message = logic.authenticate_company(comp_name, password)
+        if phone_number and password:
+            success, message = logic.authenticate_company(phone_number, password)
 
             if success:
                 st.success(f"Login successful! Welcome, {message}.")
+                comp_name, company_id = message.split('ID: ')[-2], message.split('ID: ')[-1]
+                st.session_state['comp_name'] = comp_name
+                st.session_state['company_id'] = company_id
+                st.info(f"Your Company ID is: {company_id}.")
+                job_listing_app.main()  # Open job listing app
             else:
                 st.error(f"Login failed: {message}")
         else:
-            st.error("Please provide both Company Name and Password.")
+            st.error("Please provide both Phone Number and Password.")
 
 def login_with_face_id():
     st.subheader("Login with Face ID")
@@ -74,6 +92,11 @@ def login_with_face_id():
 
             if success:
                 st.success(message)
+                comp_name, company_id = message.split('ID: ')[-2], message.split('ID: ')[-1]
+                st.session_state['comp_name'] = comp_name
+                st.session_state['company_id'] = company_id
+                st.info(f"Your Company ID is: {company_id}.")
+                job_listing_app.main()  # Open job listing app
             else:
                 st.error(message)
 

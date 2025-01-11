@@ -21,7 +21,7 @@ def blob_to_temp_file(blob_data):
     cv2.imwrite(temp_path, img)
     return temp_path
 
-def register_face(image_path, comp_name, password, representative):
+def register_face(image_path, comp_name, phone_number, password, representative):
     try:
         # Use a consistent model name
         model_name = "GhostFaceNet"  # Ensure this is the same in both functions
@@ -41,22 +41,25 @@ def register_face(image_path, comp_name, password, representative):
         # Convert embedding to a blob
         embedding_blob = base64.b64encode(np.array(embedding, dtype=np.float64)).decode('utf-8')
 
+        # Convert image to a blob
+        image_blob = image_to_blob(image_path)
+
         # Store information in the Company table
-        conn = sqlite3.connect('sure_platform.db')  # Path to the shared database
+        conn = sqlite3.connect('sure_platform.db.db')  # Path to the shared database
         cursor = conn.cursor()
 
         cursor.execute('''
-            INSERT INTO Company (comp_name, password, representative, embedding, image_data)
-            VALUES (?, ?, ?, ?, ?)
-        ''', (comp_name, password, representative, embedding_blob, image_to_blob(image_path)))
+            INSERT INTO Company (comp_name, phone_number, password, representative, embedding, image_data)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (comp_name, phone_number, password, representative, embedding_blob, image_blob))
 
         conn.commit()
         conn.close()
 
-        return True, "Face registered successfully!"
+        return True, "Company registered successfully!"
 
     except Exception as e:
-        return False, f"Error registering face: {str(e)}"
+        return False, f"Error registering company: {str(e)}"
 
 def cosine_distance(embedding1, embedding2):
     """Calculate cosine distance between two embeddings"""
@@ -73,7 +76,7 @@ def verify_face(image_path):
         # Change detector_backend to a faster option like 'opencv'
         detector_backend = 'opencv'
 
-        conn = sqlite3.connect('sure_platform.db')  # Path to the shared database
+        conn = sqlite3.connect('sure_platform.db.db')  # Path to the shared database
         cursor = conn.cursor()
 
         # Check if there are any registered companies
@@ -144,7 +147,7 @@ def verify_face(image_path):
         threshold = 0.45
         if best_match and min_distance < threshold:
             confidence = best_match[2]
-            return True, f"Match found! Company: {best_match[1]} (Confidence: {confidence:.2%})"
+            return True, f"Match found! Company ID: {best_match[0]}, Name: {best_match[1]} (Confidence: {confidence:.2%})"
         else:
             return False, f"No match found in database (Best distance: {min_distance:.2f})"
 
@@ -171,38 +174,41 @@ def capture_image():
             cv2.destroyAllWindows()
             return None
 
-def get_all_users():
-    conn = sqlite3.connect('sure_platform.db')  # Path to the shared database
+def get_all_companies():
+    conn = sqlite3.connect('sure_platform.db.db')  # Path to the shared database
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT company_id, comp_name, representative 
+        SELECT company_id, comp_name, phone_number, representative 
         FROM Company 
         ORDER BY company_id DESC
     ''')
 
-    users = []
+    companies = []
     for row in cursor.fetchall():
-        users.append({
+        companies.append({
             'company_id': row[0],
             'comp_name': row[1],
-            'representative': row[2]
+            'phone_number': row[2],
+            'representative': row[3]
         })
 
     conn.close()
-    return users
+    return companies
 
 def main():
     while True:
         print("\n1. Register new company")
         print("2. Verify face")
-        print("3. Exit")
-        choice = input("Enter your choice (1-3): ")
+        print("3. List all companies")
+        print("4. Exit")
+        choice = input("Enter your choice (1-4): ")
 
         if choice == "1":
             comp_name = input("Enter company name: ")
+            phone_number = input("Enter phone number: ")
             password = input("Enter password: ")
-            representative = input("Enter representative: ")
+            representative = input("Enter representative name: ")
             print("1. Upload image")
             print("2. Capture from webcam")
             img_choice = input("Enter choice (1-2): ")
@@ -214,7 +220,7 @@ def main():
                 if not image_path:
                     continue
 
-            success, message = register_face(image_path, comp_name, password, representative)
+            success, message = register_face(image_path, comp_name, phone_number, password, representative)
             print(message)
 
             # Clean up temporary capture file
@@ -241,6 +247,11 @@ def main():
                 os.remove(image_path)
 
         elif choice == "3":
+            companies = get_all_companies()
+            for company in companies:
+                print(f"ID: {company['company_id']}, Name: {company['comp_name']}, Phone: {company['phone_number']}, Representative: {company['representative']}")
+
+        elif choice == "4":
             break
 
 if __name__ == "__main__":

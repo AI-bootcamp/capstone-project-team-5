@@ -4,8 +4,18 @@ import sqlite3
 conn = sqlite3.connect('sure_platform.db')  # Change the filename as needed
 cursor = conn.cursor()
 
-
-
+# Create the Company table
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Company (
+    company_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    comp_name TEXT NOT NULL,
+    phone_number TEXT UNIQUE NOT NULL,
+    image_data BLOB,
+    embedding BLOB,
+    representative TEXT,
+    password TEXT NOT NULL
+);
+''')
 
 # Create the Job_Listing table
 cursor.execute('''
@@ -15,7 +25,7 @@ CREATE TABLE IF NOT EXISTS Job_Listing (
     job_title TEXT NOT NULL,
     description TEXT NOT NULL,
     requirements TEXT NOT NULL,
-    HR_questions INTEGER NOT NULL, # these will be text questions separated by commas
+    HR_questions TEXT NOT NULL, 
     FOREIGN KEY (company_id) REFERENCES Company(company_id)
 );
 ''')
@@ -24,7 +34,7 @@ CREATE TABLE IF NOT EXISTS Job_Listing (
 try:
     cursor.execute('''
     INSERT INTO Job_Listing (job_key, company_id, job_title, description, requirements, HR_questions)
-    VALUES (999, 0, 'Dummy Job', 'Dummy Description', 'Dummy Requirements', 0)
+    VALUES (999, 0, 'Dummy Job', 'Dummy Description', 'Dummy Requirements', 'Dummy Questions')
     ''')
     conn.commit()
 except sqlite3.IntegrityError:
