@@ -1,0 +1,12 @@
+streamlit
+sqlite3
+pdfplumber
+requests
+numpy
+opencv-python
+deepface
+sounddevice
+whisper
+streamlit-webrtc
+audio-recorder-streamlit
+groq
